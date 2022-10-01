@@ -1,15 +1,36 @@
 from cmath import log
+from functools import wraps
+import inspect
 import json
 import sys
 import socket
 import logging
+import time
 
 from utils import load_configs, get_message, send_message
 
 
 CONFIGS = dict()
 
+
+debug_log = open("log//client_log_config.py", 'w')
 logger = logging.getLogger('server')
+
+class CallBack():
+    def __init__(self):
+        pass
+
+
+    def __call__(self, func):
+        @wraps(func)
+        def decorated(*args, **kwargs):
+            object = inspect.stack()[1][3]
+            cal_time_format = time.strftime("%x %X")
+            func_name = func.__name__
+            debug_log.write(
+            cal_time_format, f"Функция {func_name} вызвана из функции {object}", "\n")
+            return 0
+        return decorated
 
 
 def handle_message(message, CONFIGS):
@@ -27,7 +48,7 @@ def handle_message(message, CONFIGS):
         CONFIGS.get('ERROR'): 'Bad Request'
     }
 
-
+@CallBack()
 def main():
     global CONFIGS
     CONFIGS = load_configs()
