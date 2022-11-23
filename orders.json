@@ -1,0 +1,102 @@
+{
+    "orders": [
+        {
+            "buyer": "Oleg",
+            "date": "12-10-2020",
+            "item": "Product",
+            "price": 1200,
+            "quantity": 10
+        },
+        {
+            "buyer": "Roman",
+            "date": "12-10-2020",
+            "item": "Product#2",
+            "price": 2200,
+            "quantity": 5
+        },
+        {
+            "item": "Product#2",
+            "quantity": 5,
+            "price": 2200,
+            "buyer": "Roman",
+            "date": "12-10-2020"
+        },
+        {
+            "item": "Product#0",
+            "quantity": 0,
+            "price": 0,
+            "buyer": "Roman",
+            "date": "12-10-2020"
+        },
+        {
+            "item": "Product#1",
+            "quantity": 4,
+            "price": 100,
+            "buyer": "Roman",
+            "date": "12-10-2020"
+        },
+        {
+            "item": "Product#2",
+            "quantity": 8,
+            "price": 200,
+            "buyer": "Roman",
+            "date": "12-10-2020"
+        },
+        {
+            "item": "Product#3",
+            "quantity": 12,
+            "price": 300,
+            "buyer": "Roman",
+            "date": "12-10-2020"
+        },
+        {
+            "item": "Product#4",
+            "quantity": 16,
+            "price": 400,
+            "buyer": "Roman",
+            "date": "12-10-2020"
+        },
+        {
+            "item": "Product#5",
+            "quantity": 20,
+            "price": 500,
+            "buyer": "Roman",
+            "date": "12-10-2020"
+        },
+        {
+            "item": "Product#6",
+            "quantity": 24,
+            "price": 600,
+            "buyer": "Roman",
+            "date": "12-10-2020"
+        },
+        {
+            "item": "Product#7",
+            "quantity": 28,
+            "price": 700,
+            "buyer": "Roman",
+            "date": "12-10-2020"
+        },
+        {
+            "item": "Product#8",
+            "quantity": 32,
+            "price": 800,
+            "buyer": "Roman",
+            "date": "12-10-2020"
+        },
+        {
+            "item": "Product#9",
+            "quantity": 36,
+            "price": 900,
+            "buyer": "Roman",
+            "date": "12-10-2020"
+        },
+        {
+            "item": "Product#0",
+            "quantity": 0,
+            "price": 0,
+            "buyer": "Ivan",
+            "date": "09-09-2021"
+        }
+    ]
+}
