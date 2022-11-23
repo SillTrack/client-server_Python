@@ -1,3 +1,4 @@
+
 from functools import wraps
 import inspect
 import json
@@ -6,22 +7,19 @@ import sys
 import time
 
 
-debug_log = open("log//client_log_config.py", 'w')
+
+# def log_decorator(func):
+
+#     @wraps(func)
+#     def wrapper(*args, **kwargs):
+#         object = inspect.stack()[1][3]
+#         cal_time_format = time.strftime("%x %X")
+#         func_name = func.__name__
+#         debug_log.write(cal_time_format + f"Функция {func_name} вызвана из функции {object}" + "\n")
+#         return func(*args, **kwargs)
+#     return wrapper
 
 
-def log_decorator(func):
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        object = inspect.stack()[1][3]
-        cal_time_format = time.strftime("%x %X")
-        func_name = func.__name__
-        debug_log.write(cal_time_format, f"Функция {func_name} вызвана из функции {object}", "\n")
-        return func(*args, **kwargs)
-    return wrapper
-
-
-@log_decorator
 def load_configs(is_server=True):
     config_keys = [
         'DEFAULT_PORT',
@@ -50,13 +48,13 @@ def load_configs(is_server=True):
             sys.exit(1)
     return CONFIGS
 
-@log_decorator
+
 def send_message(opened_socket, message, CONFIGS):
     json_message = json.dumps(message)
     response = json_message.encode(CONFIGS.get('ENCODING'))
     opened_socket.send(response)
 
-@log_decorator
+
 def get_message(opened_socket, CONFIGS):
     response = opened_socket.recv(CONFIGS.get('MAX_PACKAGE_LENGTH'))
     if isinstance(response, bytes):
