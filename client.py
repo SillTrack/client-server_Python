@@ -8,19 +8,12 @@ import time
 import logging
 from functools import wraps
 
-from utils import load_configs, send_message, get_message
+from utils import load_configs
+
+from utils import BaseChatFuncs
 
 from loggers import client_log_config
 from loggers import wrap_logger
-
-
-CONFIGS = dict()
-
-
-help_text = 'Поддерживаемые команды:\n \
-message - отправить сообщение. Кому и текст будет запрошены отдельно. \n \
-help - вывести подсказки по командам \n \
-exit - выход из программы'
 
 
 logger = logging.getLogger('client')
@@ -40,20 +33,8 @@ def log_decorator(func):
     return wrapper
 
 
-decorated_load_configs = log_decorator(load_configs)
-decorated_get_message = log_decorator(get_message)
-decorated_send_message = log_decorator(send_message)
-
-
-@log_decorator
-def create_presence_message(account_name, action, CONFIGS):
-    message = {
-        CONFIGS.get('ACTION'): CONFIGS.get(f'{action.upper()}'),
-        CONFIGS.get('TIME'): time.time(),
-        CONFIGS.get('USER'): account_name
-    }
-    logger.info(f'created {action} message')
-    return message
+decorated_load_configs = log_decorator(
+    load_configs)
 
 
 @log_decorator
@@ -81,139 +62,221 @@ def arg_parser(CONFIGS):
     return server_address, server_port, client_mode
 
 
-@log_decorator
-def handle_response(message, CONFIGS):
-    if CONFIGS.get('RESPONSE') in message:
-        if message[CONFIGS.get('RESPONSE')] == 200:
-            print('200 : OK')
-            logger.info(
-                'Клиент подключился к серверу, получил ответ: 200 : OK')
-            return
-    print(f'400 : {message[CONFIGS.get("ERROR")]}')
-    logger.error(f'raised ValueError in HandleResponse()')
-    raise ValueError
+class MesaagerClient(BaseChatFuncs):
 
+    def __init__(self, account_name: str, CONFIGS):
+        super().__init__(CONFIGS)
+        self.account_name = account_name
 
-@log_decorator
-def message_from_server(sock, my_username):
-    print('\n reciever запустился')
-    while True:
-        print('новая итерация')
-        logger.info('новая итерация')
+    def Add_Contact(self, action, contact):
+
+        message = {
+            CONFIGS.get('ACTION'): self.configs.get(f'{action.upper()}'),
+            CONFIGS.get('USER_ID'): contact,
+            CONFIGS.get('TIME'): time.time(),
+            CONFIGS.get('USER'): self.account_name
+        }
+
+        logger.info(f'created {action} message')
+        return message
+
+    def Delete_Contact(self, action, contact):
+
+        message = {
+            CONFIGS.get('ACTION'): self.configs.get(f'{action.upper()}'),
+            CONFIGS.get('USER_ID'): contact,
+            CONFIGS.get('TIME'): time.time(),
+            CONFIGS.get('USER'): self.account_name
+        }
+        logger.info(f'created {action} message')
+        return message
+
+    @log_decorator
+    def get_message(self, opened_socket):
+        return super().get_message(opened_socket)
+
+    @log_decorator
+    def send_message(self, opened_socket, message):
+        return super().send_message(opened_socket, message)
+
+    @log_decorator
+    def create_function_message(self, action):
+        message = {
+            CONFIGS.get('ACTION'): self.configs.get(f'{action.upper()}'),
+            CONFIGS.get('TIME'): time.time(),
+            CONFIGS.get('USER'): self.account_name
+        }
+        logger.info(f'created {action} message')
+        return message
+
+    @log_decorator
+    def handle_response(self, message):
+        if self.configs.get('RESPONSE') in message:
+            if message[self.configs.get('RESPONSE')] == 200:
+                print('200 : OK')
+                logger.info(
+                    'Клиент подключился к серверу, получил ответ: 200 : OK')
+                return
+        print(f'400 : {message[self.configs.get("ERROR")]}')
+        logger.error(f'raised ValueError in HandleResponse()')
+        raise ValueError
+
+    @log_decorator
+    def message_from_server(self, sock):
+        print('\n reciever запустился')
+        while True:
+            print('новая итерация')
+            logger.info('новая итерация')
+            try:
+                logger.info('попытка принять сообщение от сервера')
+                message = self.get_message(sock)
+                logger.info('Приянто сообщение для пользователя')
+                print(
+                    f"Пользователь {message.get('sender')} отправил вам сообщение: {message.get('message_text')}")
+            except (ValueError, json.JSONDecodeError):
+                print('плохое сообщение')
+                logger.fatal('Принято некорретное сообщение от клиента')
+            finally:
+                continue
+            #     message = decorated_get_message(sock, CONFIGS)
+            #     if CONFIGS['ACTION'] in message and message[CONFIGS['ACTION']] == CONFIGS['MESSAGE'] and \
+            #             CONFIGS['SENDER'] in message and CONFIGS['DESTINATION'] in message \
+            #             and CONFIGS['MESSAGE_TEXT'] in message and message[CONFIGS['DESTINATION']] == my_username:
+            #         print(f'\nПолучено сообщение от пользователя {message[CONFIGS["SENDER"]]}:'
+            #               f'\n{message[CONFIGS["MESSAGE_TEXT"]]}')
+            #         logger.info(f'Получено сообщение от пользователя {message[CONFIGS["SENDER"]]}:'
+            #                     f'\n{message[CONFIGS["MESSAGE_TEXT"]]}')
+            #     else:
+            #         logger.error(
+            #             f'Получено некорректное сообщение с сервера: {message}')
+            # except (OSError, ConnectionError, ConnectionAbortedError,
+            #         ConnectionResetError, json.JSONDecodeError):
+            #     logger.critical(f'Потеряно соединение с сервером.')
+            #     break
+
+    @log_decorator
+    def create_exit_message(self):
+        return {
+            self.configs['ACTION']: self.configs['EXIT'],
+            self.configs['TIME']: time.time(),
+            self.configs['ACCOUNT_NAME']: self.account_name
+        }
+
+    @log_decorator
+    def create_message(self, sock):
+        to_user = input('Введите получателя сообщения: ')
+        message = input('Введите сообщение для отправки: ')
+        message_dict = {
+            self.configs['ACTION']: self.configs['MESSAGE'],
+            self.configs['SENDER']: self.account_name,
+            self.configs['DESTINATION']: to_user,
+            self.configs['TIME']: time.time(),
+            self.configs['MESSAGE_TEXT']: message
+        }
+        logger.info(f'Сформирован словарь сообщения: {message_dict}')
         try:
-            logger.info('попытка принять сообщение от сервера')
-            message = decorated_get_message(sock, CONFIGS)
-            logger.info('Приянто сообщение для пользователя')
-            print(
-                f"Пользователь {message.get('sender')} отправил вам сообщение: {message.get('message_text')}")
-        except (ValueError, json.JSONDecodeError):
-            print('плохое сообщение')
-            logger.fatal('Принято некорретное сообщение от клиента')
-        finally:
-            continue
-        #     message = decorated_get_message(sock, CONFIGS)
-        #     if CONFIGS['ACTION'] in message and message[CONFIGS['ACTION']] == CONFIGS['MESSAGE'] and \
-        #             CONFIGS['SENDER'] in message and CONFIGS['DESTINATION'] in message \
-        #             and CONFIGS['MESSAGE_TEXT'] in message and message[CONFIGS['DESTINATION']] == my_username:
-        #         print(f'\nПолучено сообщение от пользователя {message[CONFIGS["SENDER"]]}:'
-        #               f'\n{message[CONFIGS["MESSAGE_TEXT"]]}')
-        #         logger.info(f'Получено сообщение от пользователя {message[CONFIGS["SENDER"]]}:'
-        #                     f'\n{message[CONFIGS["MESSAGE_TEXT"]]}')
-        #     else:
-        #         logger.error(
-        #             f'Получено некорректное сообщение с сервера: {message}')
-        # except (OSError, ConnectionError, ConnectionAbortedError,
-        #         ConnectionResetError, json.JSONDecodeError):
-        #     logger.critical(f'Потеряно соединение с сервером.')
-        #     break
+            self.send_message(sock, message_dict)
+            logger.info(f'Отправлено сообщение для пользователя {to_user}')
+        except:
+            logger.critical('Потеряно соединение c сервером.')
+            sys.exit(1)
+
+    @log_decorator
+    def user_interface_graphics(self, sock):
+        print(help_text)
+        while True:
+            command = input('Введите команду: ')
+
+            if command == 'message':
+
+                self.create_message(sock)
+            elif command == 'help':
+                print(help_text)
+
+            elif command == 'get_contacts':
+                self.send_message(self.create_function_message(action=command))
+
+            elif command == 'add_contacts':
+
+                name = input('Введите имя контакта')
+                self.send_message(self.Add_Contact(
+                    action='add_contacts', contact=name))
+
+            elif command == 'delete_contacts':
+
+                name = input('Введите имя контакта')
+                self.send_message(self.Delete_Contact(
+                    action='delete_contacts', contact=name))
+
+            elif command == 'exit':
+                self.send_message(
+                    sock, self.create_exit_message())
+                print('Завершение соединения.')
+                logger.info('Завершение работы по команде пользователя.')
+                time.sleep(0.5)
+                break
+            else:
+                print(
+                    'Команда не распознана, попробойте снова. help - вывести поддерживаемые команды.')
 
 
-@log_decorator
-def create_exit_message(account_name):
-    return {
-        CONFIGS['ACTION']: CONFIGS['EXIT'],
-        CONFIGS['TIME']: time.time(),
-        CONFIGS['ACCOUNT_NAME']: account_name
-    }
+CONFIGS = dict()
 
 
-@log_decorator
-def create_message(sock, account_name):
-    to_user = input('Введите получателя сообщения: ')
-    message = input('Введите сообщение для отправки: ')
-    message_dict = {
-        CONFIGS['ACTION']: CONFIGS['MESSAGE'],
-        CONFIGS['SENDER']: account_name,
-        CONFIGS['DESTINATION']: to_user,
-        CONFIGS['TIME']: time.time(),
-        CONFIGS['MESSAGE_TEXT']: message
-    }
-    logger.info(f'Сформирован словарь сообщения: {message_dict}')
-    try:
-        decorated_send_message(sock, message_dict, CONFIGS)
-        logger.info(f'Отправлено сообщение для пользователя {to_user}')
-    except:
-        logger.critical('Потеряно соединение с сервером.')
-        sys.exit(1)
+help_text = 'Поддерживаемые команды:\n \
+message - отправить сообщение. Кому и текст будет запрошены отдельно. \n \
+help - вывести подсказки по командам \n \
+exit - выход из программы'
 
 
-@log_decorator
-def user_interface_graphics(sock, my_username):
-    print(help_text)
-    while True:
-        command = input('Введите команду: ')
-        if command == 'message':
-            create_message(sock, my_username)
-        elif command == 'help':
-            print(help_text)
-        elif command == 'exit':
-            decorated_send_message(
-                sock, create_exit_message(my_username), CONFIGS)
-            print('Завершение соединения.')
-            logger.info('Завершение работы по команде пользователя.')
-            time.sleep(0.5)
-            break
-        else:
-            print(
-                'Команда не распознана, попробойте снова. help - вывести поддерживаемые команды.')
+# decorated_get_message = log_decorator(get_message)  # перевел в клиента из utils
+# decorated_send_message = log_decorator(send_message) # перевел в клиента из utils
 
 
 def main():
     global CONFIGS
 
     CONFIGS = decorated_load_configs(is_server=False)
-    thread_list = []
+    # thread_list = []
+
     server_address, server_port, client_mode = arg_parser(CONFIGS)
+
     client_name = input("введите имя пользователя \n")
 
     try:
         transport = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         transport.connect((server_address, server_port))
 
-        decorated_send_message(transport, create_presence_message(
-            CONFIGS=CONFIGS, action='presence', account_name=client_name), CONFIGS)
-        answer = handle_response(
-            decorated_get_message(transport, CONFIGS), CONFIGS)
+        client = MesaagerClient(client_name, CONFIGS)
+
+        presence_message = client.create_function_message(
+            action='presence')
+
+        client.send_message(transport, presence_message)
+
+        answer = client.handle_response(
+            client.get_message(transport))
         logger.info(
-            f'Установлено соединение с сервером. Ответ сервера: {answer}')
-        print(f'Установлено соединение с сервером.')
+            f'Установлено соединение c сервером. Ответ сервера: {answer}')
+        print(f'Установлено соединение c сервером.')
         connected = True
     except json.JSONDecodeError:
-        logger.error('Не удалось декодировать полученную Json строку.')
+        logger.error('He удалось декодировать полученную Json строку.')
         sys.exit(1)
     except ConnectionRefusedError:
         logger.critical(
-            f'Не удалось подключиться к серверу {server_address}:{server_port}, '
+            f'He удалось подключиться к серверу {server_address}:{server_port}, '
             f'конечный компьютер отверг запрос на подключение.')
         sys.exit(1)
 
     if connected:
         receiver = threading.Thread(
-            target=message_from_server, args=(transport, client_name))
+            # target=client.message_from_server, args=(transport)) # ругается что аргумент - сокет а не iterable
+            target=client.message_from_server, args=([transport]))
         receiver.daemon = True
         receiver.start()
 
-        user_interface_graphics(transport, client_name)
+        client.user_interface_graphics(transport)
 
 #       прогуглить трединг и поменять на .run()
 #       прогуглить трединг и поменять на .run()

@@ -7,19 +7,6 @@ import sys
 import time
 
 
-
-# def log_decorator(func):
-
-#     @wraps(func)
-#     def wrapper(*args, **kwargs):
-#         object = inspect.stack()[1][3]
-#         cal_time_format = time.strftime("%x %X")
-#         func_name = func.__name__
-#         debug_log.write(cal_time_format + f"Функция {func_name} вызвана из функции {object}" + "\n")
-#         return func(*args, **kwargs)
-#     return wrapper
-
-
 def load_configs(is_server=True):
     config_keys = [
         'DEFAULT_PORT',
@@ -49,20 +36,34 @@ def load_configs(is_server=True):
     return CONFIGS
 
 
-def send_message(opened_socket, message, CONFIGS):
-    json_message = json.dumps(message)
-    response = json_message.encode(CONFIGS.get('ENCODING'))
-    opened_socket.send(response)
+class BaseChatFuncs:
 
+    def __init__(self, CONFIGS):
+        self.configs = CONFIGS
 
-def get_message(opened_socket, CONFIGS):
-    response = opened_socket.recv(CONFIGS.get('MAX_PACKAGE_LENGTH'))
-    if isinstance(response, bytes):
-        json_response = response.decode(CONFIGS.get('ENCODING'))
-        response_dict = json.loads(json_response)
-        if isinstance(response_dict, dict):
-            return response_dict
+    def send_message(self, opened_socket, message):
+        json_message = json.dumps(message)
+        response = json_message.encode(self.configs.get('ENCODING'))
+        opened_socket.send(response)
+
+    def get_message(self, opened_socket):
+        response = opened_socket.recv(self.configs.get('MAX_PACKAGE_LENGTH'))
+        if isinstance(response, bytes):
+            json_response = response.decode(self.configs.get('ENCODING'))
+            response_dict = json.loads(json_response)
+            if isinstance(response_dict, dict):
+                return response_dict
+            raise ValueError
         raise ValueError
-    raise ValueError
 
 
+# def log_decorator(func):
+
+#     @wraps(func)
+#     def wrapper(*args, **kwargs):
+#         object = inspect.stack()[1][3]
+#         cal_time_format = time.strftime("%x %X")
+#         func_name = func.__name__
+#         debug_log.write(cal_time_format + f"Функция {func_name} вызвана из функции {object}" + "\n")
+#         return func(*args, **kwargs)
+#     return wrapper
