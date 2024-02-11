@@ -1,3 +1,4 @@
+# 
 from functools import wraps
 import inspect
 import json
@@ -10,8 +11,8 @@ import os
 from utils import load_configs
 from loggers import server_log_config
 from utils import BaseChatFuncs
-from db_server_creating import Server_DataBase
-from sqlalchemy.orm import declarative_base
+from db_server_creating import Server_DataBase, Client, Client_history, Contact_list
+from sqlalchemy.orm import declarative_base, Session
 from sqlalchemy import create_engine
 
 
@@ -137,6 +138,10 @@ class MessangerServer(BaseChatFuncs):
                 self.send_message(destination_socket, message)
 
 
+# TODO на handshake с клиентом делать запись в таблице
+# TODO на action == add_contact добавлять контакт в список контактов
+# TODO на action == delete_contact удалять контак из списка контактов
+
 def main():
 
     CONFIGS = decorated_load_configs()
@@ -146,6 +151,8 @@ def main():
     print('Сервер запущен')
 
     print(server.database.create_db())
+
+    server_db_engine = server.database.engine
 
     # try:
     #     if '-p' in sys.argv:
@@ -201,6 +208,7 @@ def main():
                 print(message)
                 if response.get('INIT', False):
                     connections[message.get('user')] = client
+                    
                     reciever = threading.Thread(
                         target=(server.client_handler), args=(message.get('user'), connections))
                     thread_list.append(reciever)

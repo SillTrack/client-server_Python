@@ -16,5 +16,9 @@
     "DESTINATION": "destination",
     "MESSAGE_TEXT": "message_text",
     "EXIT": "exit",
-    "FAIL": "fail"
+    "FAIL": "fail",
+    "GET_CONTATCS": "get_contacts",
+    "ADD_CONTACT": "add_contact",
+    "DELETE_CONTACT": "delete_contact",
+    "USER_ID": "user_id"
 }
